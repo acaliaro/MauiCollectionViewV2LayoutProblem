@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiApp4.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MauiApp4"
+    xmlns:mct="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    x:DataType="local:MainViewModel">
+
+    <RefreshView Command="{Binding RefreshEvseListCommand}" IsRefreshing="{Binding IsRefreshingEvseList}">
+        <CollectionView
+            HorizontalScrollBarVisibility="Never"
+            ItemSizingStrategy="MeasureAllItems"
+            ItemsSource="{Binding EvseList}"
+            SelectionMode="None"
+            VerticalScrollBarVisibility="Never">
+
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout ItemSpacing="10" Orientation="Vertical" />
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.Header>
+                <ContentView>
+                    <HybridWebView x:Name="WebContent" DefaultFile="index.html" />
+                </ContentView>
+            </CollectionView.Header>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="local:EvseDto">
+                    <!--  ContentView: otherwise does not have horizontal margins  -->
+                    <ContentView>
+                        <Grid Margin="20,0" Style="{StaticResource cvGrid}">
+
+                            <local:WallboxView
+                                Name="{Binding Name}"
+                                HasPendingUpdate="True"
+                                HasStatusInfoPrimary="{Binding HasData}"
+                                HasStatusInfoSecondary="False"
+                                IsFavorite="True"
+                                IsMasterSlave="False" />
+                        </Grid>
+                    </ContentView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.Footer>
+                <Border>
+                    <Image Source="dotnet_bot.png" />
+                </Border>
+            </CollectionView.Footer>
+
+        </CollectionView>
+    </RefreshView>
+
+</ContentPage>

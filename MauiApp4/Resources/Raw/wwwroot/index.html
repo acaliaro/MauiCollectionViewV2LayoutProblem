@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External SVG Loader</title>
+
+    <style>
+        body {
+            overflow: hidden; /* Disabilita lo scroll */
+        }
+
+        html {
+            height: 100%;
+        }
+    </style>
+
+    <script src="HybridWebView.js"></script>
+
+</head>
+<body>
+    <div id="svgContainer"></div>
+
+    <script>
+        window.onerror = async function (message, source, lineno, colno, error) {
+            console.error(`JS ERROR: ${message} at ${source}:${lineno}:${colno}`, error);
+            await window.HybridWebView.InvokeDotNet('LogErrors', [`JS ERROR: ${message} at ${source}:${lineno}:${colno}`]);
+        };
+
+        window.onunhandledrejection = async function (event) {
+            console.error(`Unhandled Promise Rejection: ${event.reason}`);
+            await window.HybridWebView.InvokeDotNet('LogErrors', [`Unhandled Promise Rejection: ${event.reason}`]);
+        };
+
+        async function loadSvg() {
+            try {
+                const response = await fetch("ems.svg");
+                const data = await response.text();
+
+                document.getElementById("svgContainer").innerHTML = data;
+
+                const elementsMap = {
+                    ".photovoltaicClickable": "photovoltaicClicked",
+                    ".networkClickable": "networkClicked",
+                    ".homeClickable": "homeClicked",
+                    ".evseClickable": "evseClicked",
+                    ".accumulationClickable": "accumulationClicked"
+                };
+
+                for (const selector in elementsMap) {
+                    document.querySelectorAll(selector).forEach(element => {
+                        element.addEventListener("click", () => {
+                            window.HybridWebView.SendRawMessage(elementsMap[selector]);
+                        });
+                    });
+                }
+                window.HybridWebView.SendRawMessage('pageLoaded')
+
+                console.log("SVG loaded and event listeners attached.");
+            } catch (error) {
+                console.error("Error loading SVG:", error);
+            }
+        }
+
+        function updateBoxLabels(photovoltaicLabel, evseLabel, accumulationLabel, networkLabel, homeLabel) {
+            document.getElementById("photovoltaicLabel").textContent = photovoltaicLabel;
+            document.getElementById("evseLabel").textContent = evseLabel;
+            document.getElementById("accumulationLabel").textContent = accumulationLabel;
+            document.getElementById("networkLabel").textContent = networkLabel;
+            document.getElementById("homeLabel").textContent = homeLabel;
+        }
+
+        function updateBoxValues(pvPower, totalPower, soc, batteryPower, evsesPowerConsumption, housePowerConsumption) {
+
+            if (batteryPower >= 0) { //green
+                document.getElementById("_x3C_Arrow-positive_x3E_").classList.remove("st5");
+                document.getElementById("_x3C_Arrow-negative_x3E_").classList.remove("st5");
+                document.getElementById("_x3C_Arrow-negative_x3E_").classList.add("st5");
+
+                //document.getElementById("_x3C_Value-accumulo_x3E_").classList.remove(...document.getElementById("_x3C_Value-accumulo_x3E_").classList);
+                //document.getElementById("_x3C_Value-accumulo_x3E_").classList.add("st1");
+
+            } else { //red
+                document.getElementById("_x3C_Arrow-positive_x3E_").classList.remove("st5");
+                document.getElementById("_x3C_Arrow-negative_x3E_").classList.remove("st5");
+                document.getElementById("_x3C_Arrow-positive_x3E_").classList.add("st5");
+
+                //document.getElementById("_x3C_Value-accumulo_x3E_").classList.remove(...document.getElementById("_x3C_Value-accumulo_x3E_").classList);
+                //document.getElementById("_x3C_Value-accumulo_x3E_").classList.add("st6");
+            }
+
+            document.getElementById("_x3C_Value-accumulo_x3E_").textContent = batteryPower + " kW • " + soc + "%";
+            document.getElementById("_x3C_Value-casa_x3E_").textContent = housePowerConsumption + " kW";
+            document.getElementById("_x3C_Value-Fotovoltaico_x3E_").textContent = pvPower + " kW";
+            document.getElementById("_x3C_Value-rete_x3E_").textContent = totalPower + " kW";
+            document.getElementById("_x3C_Value-caricatore_x3E_").textContent = evsesPowerConsumption + " kW";
+
+        }
+
+        (async () => {
+            await loadSvg();
+        })();
+
+    </script>
+</body>
+</html>
